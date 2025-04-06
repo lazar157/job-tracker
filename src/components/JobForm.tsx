@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import { db } from "../firebase/config";// Adjusted import path
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { JobStatus } from "../types/job";
+import { toast } from "react-hot-toast";
 
-const JobForm: React.FC = () => {
+interface JobFormProps {
+    onJobAdded: () => void; // Callback to refresh jobs
+  }
+
+const JobForm: React.FC<JobFormProps> = ({onJobAdded}) => {
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState<JobStatus>("Applied");
@@ -19,16 +24,17 @@ const JobForm: React.FC = () => {
           position,
           status,
           notes,
-          date: new Date().toISOString(),
+          createdAt: serverTimestamp(), // Add timestamp
         });
         setCompany("");
         setPosition("");
         setStatus("Applied");
         setNotes("");
-        alert("Job application added!");
+        toast.success("Job application added!");
+        onJobAdded(); 
       } catch (error) {
         console.error("Error adding job: ", error);
-        alert("Failed to add job.");
+        toast.error("Failed to add job.");
       }
     }
   };
