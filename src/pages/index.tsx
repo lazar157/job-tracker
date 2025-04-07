@@ -3,9 +3,18 @@ import JobForm from "../components/JobForm";
 import JobCard from "../components/JobCard";
 import { db } from "../firebase/config";
 import { query, where, getDocs, collection, orderBy } from "firebase/firestore";
-import { Job, JobStatus } from "../types/job"; // Import the Job and JobStatus types
+import { Job, JobStatus } from "../types/job"; 
+import { useAuth } from "../context/AuthContext"; 
 
+export interface User {
+  id: string;
+  email: string;
+  fullName?: string; 
+}
 const HomePage: React.FC = () => {
+
+
+  const { user, logout } = useAuth(); // Get the user and logout function from AuthContext
   const [jobs, setJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<JobStatus | "All">("All");
@@ -76,10 +85,27 @@ const HomePage: React.FC = () => {
     fetchJobs();
   }, [searchTerm, statusFilter]); // Fetch jobs when search term or status filter changes
 
+  const handleLogout = async () => {
+    try {
+      await logout(); // Call the logout function from AuthContext
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <header>
-        <h1 className="text-3xl font-bold">Job Application Tracker</h1>
+      <h1 className="text-3xl font-bold">Job Application Tracker</h1>
+        <div>
+          <span className="mr-4">Welcome, {user?.fullName || "Guest"}</span>
+          <button
+            onClick={handleLogout}
+            className="p-2 bg-red-500 text-white rounded"
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       <JobForm onJobAdded={fetchJobs}/>
