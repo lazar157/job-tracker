@@ -2,14 +2,18 @@ import React, { useState, useEffect } from "react";
 import JobForm from "../components/JobForm";
 import JobCard from "../components/JobCard";
 import { db } from "../firebase/config";
-import { query, where, getDocs, collection, orderBy } from "firebase/firestore";
-import { Job, JobStatus } from "../types/job"; 
-import { useAuth } from "../context/AuthContext"; 
+import { query, where, getDocs, collection, orderBy, doc } from "firebase/firestore";
+import { Job, JobStatus } from "../types/job";
+import { useAuth } from "../context/AuthContext";
+import { deleteDoc } from "firebase/firestore";
+import UpdateModal from "../components/UpdateModal"
+import Dashboard from "../components/Dashboard";
+
 
 export interface User {
   id: string;
   email: string;
-  fullName?: string; 
+  fullName?: string;
 }
 const HomePage: React.FC = () => {
 
@@ -18,6 +22,9 @@ const HomePage: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<JobStatus | "All">("All");
+  const [editingJob, setEditingJob] = useState<Job | null>(null); // Track the job being edited
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   const fetchJobs = async () => {
     try {
@@ -79,7 +86,21 @@ const HomePage: React.FC = () => {
     }
   };
 
-  
+  const handleEdit = (job: Job) => {
+    setEditingJob(job); // Set the job to be edited
+    setIsModalOpen(true)
+  };
+
+
+  const handleRemove = async (jobId: string) => {
+    try {
+      await deleteDoc(doc(db, "jobs", jobId)); // Remove the job from Firestore
+      setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobId)); // Update the local state
+    } catch (error) {
+      console.error("Error removing job:", error);
+    }
+  };
+
 
   useEffect(() => {
     fetchJobs();
@@ -96,7 +117,7 @@ const HomePage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <header>
-      <h1 className="text-3xl font-bold">Job Application Tracker</h1>
+        <h1 className="text-3xl font-bold">Job Application Tracker</h1>
         <div>
           <span className="mr-4">Welcome, {user?.fullName || "Guest"}</span>
           <button
@@ -108,7 +129,9 @@ const HomePage: React.FC = () => {
         </div>
       </header>
 
-      <JobForm onJobAdded={fetchJobs}/>
+      <Dashboard />
+
+      <JobForm onJobAdded={fetchJobs} editingJob={editingJob} setEditingJob={setEditingJob} />
 
       {/* Search Bar */}
       <input
@@ -119,7 +142,7 @@ const HomePage: React.FC = () => {
         className="w-full p-2 border rounded mb-4"
       />
 
-      
+
       {/* Status Filter */}
       <select
         value={statusFilter}
@@ -134,11 +157,32 @@ const HomePage: React.FC = () => {
       </select>
 
       <div className="space-y-4">
-        {jobs.map((job) => (
-          <JobCard key={job.id} job={job} />
-        ))}
+        {jobs.length > 0 ? (
+          jobs.map((job) => (
+            <JobCard key={job.id} job={job} onEdit={handleEdit} onRemove={handleRemove} />
+          ))
+        ) : (
+          <p className="text-center text-gray-500 mt-4">No jobs found. Start by adding a new job!</p>
+        )}
       </div>
-    </div>
+      <UpdateModal
+       isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+           setEditingJob(null)
+        }}>
+      <h2 className="text-xl font-bold mb-4">Update Job</h2>
+      <JobForm
+        onJobAdded={async () => {
+          await fetchJobs();
+          setIsModalOpen(false);
+          setEditingJob(null) // Close the modal after updating
+        }}
+        editingJob={editingJob}
+        setEditingJob={setEditingJob}
+      />
+    </UpdateModal>
+    </div >
   );
 };
 

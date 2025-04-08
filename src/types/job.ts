@@ -6,4 +6,8 @@ export interface Job {
     position: string;
     status: JobStatus;
     notes?: string; 
+    createdAt?:string;
+    interviewDate?: string; // Optional field for interview date
+  
+
 }
