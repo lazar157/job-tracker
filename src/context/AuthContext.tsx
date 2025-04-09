@@ -7,6 +7,13 @@ import { doc, getDoc } from "firebase/firestore"; // Import Firestore functions\
 
 export interface ExtendedUser extends User {
   fullName?: string; // Add fullName as an optional property
+  dateOfBirth?: string; // Add dateOfBirth as an optional property
+  profilePicture?: string; // Add profilePicture as an optional property
+  phoneNumber: string | null; // Add phoneNumber as a property
+  address?: string; // Add address as an optional property
+  username?: string; // Add username as an optional property
+  createdAt?: string; // Add createdAt as an optional property
+  
 }
 interface AuthContextProps {
   user: ExtendedUser | null; // The currently logged-in user
@@ -23,22 +30,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Fetch additional user data from Firestore
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        const additionalData = userDoc.exists() ? userDoc.data() : {};
+        try {
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          const additionalData = userDoc.exists() ? userDoc.data() : {};
   
-        // Set the user with additional data (e.g., fullname)
-        setUser({
-          ...currentUser,
-          fullName: additionalData?.fullName || null, // Add fullname if it exists
-        } as ExtendedUser);
+          setUser({
+            ...currentUser,
+            fullName: additionalData?.fullName || "N/A",
+            dateOfBirth: additionalData?.dateOfBirth || "N/A",
+        
+            phoneNumber: additionalData?.phoneNumber || "N/A",
+            address: additionalData?.address || "N/A",
+            username: additionalData?.username || "N/A",
+            createdAt: additionalData?.createdAt || "N/A",
+          } as ExtendedUser);
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+        }
       } else {
-        setUser(null); // No user is logged in
+        setUser(null);
       }
       setLoading(false);
     });
   
-    return () => unsubscribe(); // Cleanup the listener on unmount
+    return () => unsubscribe();
   }, []);
   const logout = async () => {
     await signOut(auth);

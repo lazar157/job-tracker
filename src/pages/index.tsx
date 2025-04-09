@@ -7,13 +7,21 @@ import { Job, JobStatus } from "../types/job";
 import { useAuth } from "../context/AuthContext";
 import { deleteDoc } from "firebase/firestore";
 import UpdateModal from "../components/UpdateModal"
+import Modal from "react-modal";
+import { UserCircleIcon } from "@heroicons/react/solid"; // Import Heroicons for the profile icon
+
 import Dashboard from "../components/Dashboard";
+
+Modal.setAppElement("#root"); // Set the app element for accessibility
+
 
 
 export interface User {
   id: string;
   email: string;
   fullName?: string;
+  dateOfBirth?: string; // Ensure this property is defined
+
 }
 const HomePage: React.FC = () => {
 
@@ -24,6 +32,8 @@ const HomePage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<JobStatus | "All">("All");
   const [editingJob, setEditingJob] = useState<Job | null>(null); // Track the job being edited
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // State to toggle profile dropdown
+
 
 
   const fetchJobs = async () => {
@@ -114,20 +124,121 @@ const HomePage: React.FC = () => {
     }
   };
 
+  const customStyles = {
+    content: {
+      top: "50%",
+      left: "50%",
+      right: "auto",
+      bottom: "auto",
+      marginRight: "-50%",
+      transform: "translate(-50%, -50%)",
+      width: "80%",
+      maxWidth: "600px",
+      padding: "20px",
+      borderRadius: "10px",
+      boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    },
+    overlay: {
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
-      <header>
+      {/* Header */}
+      <header className="flex justify-between items-center bg-blue-500 text-white p-4 rounded-lg shadow-md">
         <h1 className="text-3xl font-bold">Job Application Tracker</h1>
-        <div>
-          <span className="mr-4">Welcome, {user?.fullName || "Guest"}</span>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm">Welcome, {user?.fullName || "Guest"}</span>
           <button
-            onClick={handleLogout}
-            className="p-2 bg-red-500 text-white rounded"
+            onClick={() => setIsProfileOpen(true)} // Open profile modal
+           
           >
-            Logout
+            <UserCircleIcon className="w-8 h-8 text-gray-900" /> {/* Profile Icon */}
           </button>
+          <div>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition duration-200"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* Profile Modal */}
+      <Modal
+        isOpen={isProfileOpen}
+        onRequestClose={() => setIsProfileOpen(false)} // Close modal
+        style={{
+          overlay: {
+            backgroundColor: "rgba(0, 0, 0, 0.7)", // Darker overlay for better focus
+          },
+          content: {
+            inset: "50% auto auto 50%",
+            transform: "translate(-50%, -50%)",
+            padding: "0",
+            border: "none",
+            borderRadius: "12px",
+            maxWidth: "500px",
+            width: "90%",
+            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.3)",
+          },
+        }}
+      >
+        <div className="bg-white rounded-lg overflow-hidden">
+          {/* Modal Header */}
+          <div className="bg-blue-500 text-white p-4 flex justify-between items-center">
+            <h2 className="text-xl font-bold">Profile Details</h2>
+            <button
+              onClick={() => setIsProfileOpen(false)}
+              className="text-white hover:text-gray-200 transition"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Modal Content */}
+          <div className="p-6 space-y-6">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-24 h-24 rounded-full border-2 border-gray-300 flex items-center justify-center bg-gray-200">
+                <UserCircleIcon className="w-16 h-16 text-gray-500" /> {/* Profile Icon */}
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-bold">{user?.fullName || "N/A"}</h3>
+                <p className="text-sm text-gray-500">{user?.email || "N/A"}</p>
+              </div>
+            </div>
+            <hr className="border-gray-300" />
+            <div className="space-y-2">
+              <p>
+                <strong>Full Name:</strong> {user?.fullName || "N/A"}
+              </p>
+              <p>
+                <strong>Username:</strong> {user?.username || "N/A"}
+              </p>
+              <p>
+                <strong>Date of Birth:</strong> {user?.dateOfBirth || "N/A"}
+              </p>
+              <p>
+                <strong>Phone Number:</strong> {user?.phoneNumber || "N/A"}
+              </p>
+              <p>
+                <strong>Address:</strong> {user?.address || "N/A"}
+              </p>
+              <p>
+                <strong>Account Created:</strong> {user?.createdAt || "N/A"}
+              </p>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+
+        </div>
+
+      </Modal>
+
 
       <Dashboard />
 
@@ -166,22 +277,22 @@ const HomePage: React.FC = () => {
         )}
       </div>
       <UpdateModal
-       isOpen={isModalOpen}
+        isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-           setEditingJob(null)
+          setEditingJob(null)
         }}>
-      <h2 className="text-xl font-bold mb-4">Update Job</h2>
-      <JobForm
-        onJobAdded={async () => {
-          await fetchJobs();
-          setIsModalOpen(false);
-          setEditingJob(null) // Close the modal after updating
-        }}
-        editingJob={editingJob}
-        setEditingJob={setEditingJob}
-      />
-    </UpdateModal>
+        <h2 className="text-xl font-bold mb-4">Update Job</h2>
+        <JobForm
+          onJobAdded={async () => {
+            await fetchJobs();
+            setIsModalOpen(false);
+            setEditingJob(null) // Close the modal after updating
+          }}
+          editingJob={editingJob}
+          setEditingJob={setEditingJob}
+        />
+      </UpdateModal>
     </div >
   );
 };

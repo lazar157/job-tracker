@@ -3,7 +3,9 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/config";
 import { useNavigate } from "react-router-dom";
 import { doc, setDoc } from "firebase/firestore";
-import { db } from "../firebase/config"; // Import Firestore instance
+import { db} from "../firebase/config"; // Import Firestore and Storage instances
+
+
 
 const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -12,7 +14,6 @@ const RegisterPage: React.FC = () => {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [address, setAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +38,7 @@ const RegisterPage: React.FC = () => {
         phoneNumber,
         dateOfBirth,
         address,
-        createdAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),       
       });
 
       navigate("/");
@@ -116,14 +117,7 @@ const RegisterPage: React.FC = () => {
           placeholder="Phone Number"
           className="w-full p-2 border rounded"
         />
-        <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700">
-          Profile Picture
-        </label>
-        <input
-          type="file"
-          onChange={(e) => setProfilePicture(e.target.files ? e.target.files[0] : null)}
-          className="w-full p-2 border rounded"
-        />
+     
         <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
           Date of Birth
         </label>
